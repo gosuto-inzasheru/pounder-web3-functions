@@ -1,37 +1,4 @@
-# Web3 Functions Template  <!-- omit in toc -->
-Use this template to write, test and deploy Web3 Functions.
-
-## What are Web3 Functions? 
-Web3 Functions are decentralized cloud functions that work similarly to AWS Lambda or Google Cloud, just for web3. They enable developers to execute on-chain transactions based on arbitrary off-chain data (APIs / subgraphs, etc) & computation. These functions are written in Typescript, stored on IPFS and run by Gelato. 
-
-## Documentation
-
-You can find the official Web3 Functions documentation [here](https://docs.gelato.network/developer-services/web3-functions).
-
-## Private Beta Restriction
-
-Web3 Functions are currently in private Beta and can only be used by whitelisted users. If you would like to be added to the waitlist, please reach out to the team on [Discord](https://discord.com/invite/ApbA39BKyJ) or apply using this [form](https://form.typeform.com/to/RrEiARiI).
-
-## Table of Content
-
-- [What are Web3 Functions?](#what-are-web3-functions)
-- [Documentation](#documentation)
-- [Private Beta Restriction](#private-beta-restriction)
-- [Table of Content](#table-of-content)
-- [Project Setup](#project-setup)
-- [Write a Web3 Function](#write-a-web3-function)
-- [Test your web3 function](#test-your-web3-function)
-- [Use User arguments](#use-user-arguments)
-- [Use State / Storage](#use-state--storage)
-- [Use user secrets](#use-user-secrets)
-- [Deploy your Web3Function on IPFS](#deploy-your-web3function-on-ipfs)
-- [Create your Web3Function task](#create-your-web3function-task)
-- [More examples](#more-examples)
-  - [Coingecko oracle](#coingecko-oracle)
-  - [Event listener](#event-listener)
-  - [Secrets](#secrets)
-  - [Advertising Board](#advertising-board)
-
+# Pounder Web3 Functions
 
 ## Project Setup
 1. Install project dependencies
@@ -51,362 +18,49 @@ PROVIDER_URLS="" # your provider URLS seperated by comma (e.g. https://eth-mainn
 PRIVATE_KEY="" # optional: only needed if you wish to create a task from the CLI instead of the UI
 ```
 
+## Test Harvest paladin function
 
-## Write a Web3 Function
-
-- Go to  `web3-functions/my-web3-function`
-- Write your Web3 Function logic within the `Web3Function.onRun` function.
-- Example:
-```typescript
-import { Web3Function, Web3FunctionContext } from "@gelatonetwork/web3-functions-sdk";
-import { Contract } from "@ethersproject/contracts";
-import ky from "ky"; // we recommend using ky as axios doesn't support fetch by default
-
-const ORACLE_ABI = [
-  "function lastUpdated() external view returns(uint256)",
-  "function updatePrice(uint256)",
-];
-
-Web3Function.onRun(async (context: Web3FunctionContext) => {
-  const { userArgs, gelatoArgs, multiChainProvider } = context;
-
-  const provider = multiChainProvider.default();
-
-  // Retrieve Last oracle update time
-  const oracleAddress = "0x71B9B0F6C999CBbB0FeF9c92B80D54e4973214da";
-  const oracle = new Contract(oracleAddress, ORACLE_ABI, provider);
-  const lastUpdated = parseInt(await oracle.lastUpdated());
-  console.log(`Last oracle update: ${lastUpdated}`);
-
-  // Check if it's ready for a new update
-  const nextUpdateTime = lastUpdated + 300; // 5 min
-  const timestamp = (await provider.getBlock("latest")).timestamp;
-  console.log(`Next oracle update: ${nextUpdateTime}`);
-  if (timestamp < nextUpdateTime) {
-    return { canExec: false, message: `Time not elapsed` };
-  }
-
-  // Get current price on coingecko
-  const currency = "ethereum";
-  const priceData: any = await ky
-    .get(
-      `https://api.coingecko.com/api/v3/simple/price?ids=${currency}&vs_currencies=usd`,
-      { timeout: 5_000, retry: 0 }
-    )
-    .json();
-  price = Math.floor(priceData[currency].usd);
-  console.log(`Updating price: ${price}`);
-
-  // Return execution call data
-  return {
-    canExec: true,
-    callData: [{to: oracleAddress, data: oracle.interface.encodeFunctionData("updatePrice", [price]}]),
-  };
-});
-```
-- Each  Web3 Function has a `schema.json` file to specify the runtime configuration. In later versions you will have more optionality to define what resources your Web3 Function requires. 
-```json
-{
-  "web3FunctionVersion": "2.0.0",
-  "runtime": "js-1.0",
-  "memory": 128, 
-  "timeout": 30,
-  "userArgs": {}
-}
-```
-
-
-## Test your web3 function
-
-### Calling your web3 function
-
-- Use `npx w3f test FILEPATH` command to test your function
+- Use `npx w3f test web3-functions/harvest-paladin/index.ts --logs` command to test
 
 - Options:
   - `--logs` Show internal Web3 Function logs
   - `--debug` Show Runtime debug messages
   - `--chain-id=[number]` Specify the chainId to be used for your Web3 Function (default: `5` for Goerli)
 
-- Example:<br/> `npx w3f test web3-functions/oracle/index.ts --logs`
 - Output:
 ```
 Web3Function Build result:
- ✓ Schema: web3-functions/oracle/schema.json
- ✓ Built file: /Users/chuahsonglin/Documents/GitHub/Gelato/backend/js-resolver-template/.tmp/index.js
- ✓ File size: 1.63mb
- ✓ Build time: 91.34ms
+✓ Schema: web3-functions/harvest-paladin/schema.json
+✓ Built file: /Users/xxx/Desktop/POUNDER_WEB3_FUNCTIONS/.tmp/index.js
+✓ File size: 0.68mb
+✓ Build time: 90.74ms
 
-Web3Function user args validation:
- ✓ currency: ethereum
- ✓ oracle: 0x71B9B0F6C999CBbB0FeF9c92B80D54e4973214da
-
-Web3Function running...
+Web3Function running logs:
+> Rewards arguments position0:
+>           token=0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174
+>           amount=522386
+>           proofs=0x531eaa5409d7d69bea6645df992dacb1b2a17e7a5a4f40bb0fa47411c6b398a8,0x91db90465cb3a03210c86b482dc80ed0b10081c2e5fb24cdb7b9107591d948ed,0x55a4738738f002d7c1c7971057bac1415c9753496b9056f5e5e49a34c99f6b13,0x1a075c0ab836c8fd208522935fb934a14bf744369d44a066c67dadb9a1840bd0,0xa02c98fbe0b3067b33af657d5a7c1d50d34476348ead5b0eda77769142f8152e
+>           index=7
+>           chainId=137
+> Rewards arguments position1:
+>           token=0x255707B70BF90aa112006E1b07B9AeA6De021424
+>           amount=54968099310608625233992
+>           proofs=0xa2a8af8e03f6beaf6fe0ac69122ad77d431caec601b924f6f6623e64631423a5,0x55555df391d6deeb5528b2d5af9ebbde90834e494a70b981376119e159c1e9be
+>           index=1
+>           chainId=137
+> Rewards arguments position2:
+>           token=0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48
+>           amount=98932371
+>           proofs=0xe5840e80c178cc7c861695155f51c43f8eaa3af1340f6fd6fa5fed248ba4fb20,0x5a85107058447ce4d0194c8b3cbadc452c2c71f7f5066a29a20d0fa6be973025,0xcb99ed9ac688a622b2e27104aeedf1931603ff3308a55ffde755909701d3fe2a,0x52d1f63e39f63452ee58648d00a68a99ed14a72f217c5042db58b6d0f285c8cd,0x58757dea685d0716c096b5f3cd04fb46fd0bbfc2ca547d7d14aa237123a27cf9
+>           index=25
+>           chainId=1
 
 Web3Function Result:
- ✓ Return value: {
-  canExec: true,
-  callData: [
-    {
-      to: '0x71B9B0F6C999CBbB0FeF9c92B80D54e4973214da',
-      data: '0x8d6cc56d0000000000000000000000000000000000000000000000000000000000000769'
-    }
-  ]
-}
+ ✗ Error: Web3Function must return {canExec: bool, callData: {to: string, data: string}[]}. Instead returned: {"canExec":true,"callData":"0xec7b768500000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000003000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000001a000000000000000000000000000000000000000000000000000000000000002800000000000000000000000002791bca1f2de4661ed88a30c99a7a9449aa841740000000000000000000000000000000000000000000000000000000000000007000000000000000000000000000000000000000000000000000000000007f89200000000000000000000000000000000000000000000000000000000000000800000000000000000000000000000000000000000000000000000000000000005531eaa5409d7d69bea6645df992dacb1b2a17e7a5a4f40bb0fa47411c6b398a891db90465cb3a03210c86b482dc80ed0b10081c2e5fb24cdb7b9107591d948ed55a4738738f002d7c1c7971057bac1415c9753496b9056f5e5e49a34c99f6b131a075c0ab836c8fd208522935fb934a14bf744369d44a066c67dadb9a1840bd0a02c98fbe0b3067b33af657d5a7c1d50d34476348ead5b0eda77769142f8152e000000000000000000000000255707b70bf90aa112006e1b07b9aea6de0214240000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000ba3d39e5186d568f04800000000000000000000000000000000000000000000000000000000000000800000000000000000000000000000000000000000000000000000000000000002a2a8af8e03f6beaf6fe0ac69122ad77d431caec601b924f6f6623e64631423a555555df391d6deeb5528b2d5af9ebbde90834e494a70b981376119e159c1e9be000000000000000000000000a0b86991c6218b36c1d19d4a2e9eb0ce3606eb4800000000000000000000000000000000000000000000000000000000000000190000000000000000000000000000000000000000000000000000000005e5969300000000000000000000000000000000000000000000000000000000000000800000000000000000000000000000000000000000000000000000000000000005e5840e80c178cc7c861695155f51c43f8eaa3af1340f6fd6fa5fed248ba4fb205a85107058447ce4d0194c8b3cbadc452c2c71f7f5066a29a20d0fa6be973025cb99ed9ac688a622b2e27104aeedf1931603ff3308a55ffde755909701d3fe2a52d1f63e39f63452ee58648d00a68a99ed14a72f217c5042db58b6d0f285c8cd58757dea685d0716c096b5f3cd04fb46fd0bbfc2ca547d7d14aa237123a27cf9"}
 
 Web3Function Runtime stats:
- ✓ Duration: 3.29s
- ✓ Memory: 74.78mb
- ✓ Storage: 0.03kb
- ✓ Rpc calls: 3
+ ✓ Duration: 0.58s
+ ✓ Memory: 76.33mb
+ ✓ Network: 1 req [ DL: 6.93kb / UL:  0.60kb]
+ ✓ Rpc calls: 0
   ```
-
-### Writing unit test for your web3 function
-
-- Define your tests in  `test/hellow-world.test.ts`
-- Use `yarn test` command to run unit test suite.
-
-You can fork a network in your unit test.
-RPC methods of provider can be found in [Foundry's Anvil docs](https://book.getfoundry.sh/reference/anvil/)
-
-Example: [`test/advertising-board.test.ts`](./test/advertising-board.test.ts)
-
-```ts
-  import { AnvilServer } from "./utils/anvil-server";
-
-  goerliFork = await AnvilServer.fork({
-    forkBlockNumber: 8483100,
-    forkUrl: "https://rpc.ankr.com/eth_goerli",
-  });
-
-  const forkedProvider = goerliFork.provider;
-```
-
-### Calling your web3 function against a local node, i.e. Anvil (Foundry)
-1. Update your .env file with the RPC url
-
-2. Spin your local node 
-
-```
-npx run forkAnvil
-```
-3. Update the PROVIDE_URLS with the local server url, i.e. http://127.0.0.1:8545 
-
-4. Run your test
-
-```
-npx w3f test web3-functions/oracle/index.ts --logs
-```
-
-## Use User arguments
-1. Declare your expected `userArgs` in your schema, accepted types are 'string', 'string[]', 'number', 'number[]', 'boolean', 'boolean[]':
-
-```json
-{
-  "web3FunctionVersion": "2.0.0",
-  "runtime": "js-1.0",
-  "memory": 128,
-  "timeout": 30,
-  "userArgs": {
-    "currency": "string",
-    "oracle": "string"
-  }
-}
-```
-
-2. Access your `userArgs` from the Web3Function context:
-
-```typescript
-Web3Function.onRun(async (context: Web3FunctionContext) => {
-  const { userArgs, gelatoArgs, secrets } = context;
-
-  // User args:
-  console.log("Currency:", userArgs.currency);
-  console.log("Oracle:", userArgs.oracle);
-});
-```
-
-3. Populate `userArgs` in `userArgs.json` and test your web3 function:
-
-```json
-{
-  "currency": "ethereum",
-  "oracle": "0x71B9B0F6C999CBbB0FeF9c92B80D54e4973214da"
-}
-
-```
-
-```
-npx w3f test web3-functions/oracle/index.ts --logs
-```
-
-## Use State / Storage
-
-Web3Functions are stateless scripts, that will run in a new & empty memory context on every execution.
-If you need to manage some state variable, we provide a simple key/value store that you can access from your web3 function `context`.
-
-See the below example to read & update values from your storage:
-
-```typescript
-import {
-  Web3Function,
-  Web3FunctionContext,
-} from "@gelatonetwork/web3-functions-sdk";
-
-Web3Function.onRun(async (context: Web3FunctionContext) => {
-  const { storage, multiChainProvider } = context;
-
-  const provider = multiChainProvider.default();
-
-  // Use storage to retrieve previous state (stored values are always string)
-  const lastBlockStr = (await storage.get("lastBlockNumber")) ?? "0";
-  const lastBlock = parseInt(lastBlockStr);
-  console.log(`Last block: ${lastBlock}`);
-
-  const newBlock = await provider.getBlockNumber();
-  console.log(`New block: ${newBlock}`);
-  if (newBlock > lastBlock) {
-    // Update storage to persist your current state (values must be cast to string)
-    await storage.set("lastBlockNumber", newBlock.toString());
-  }
-
-  return {
-    canExec: false,
-    message: `Updated block number: ${newBlock.toString()}`
-  };
-});
-```
-
-Test storage execution:<br/>
-`npx w3f test web3-functions/storage/index.ts --logs`
-
-You will see your updated key/values:
-```
-Simulated Web3Function Storage update:
- ✓ lastBlockNumber: '8944652'
-```
-
-## Use user secrets
-
-1. Input your secrets in `.env` file in the same directory as your web3 function.
-
-```
-COINGECKO_API=https://api.coingecko.com/api/v3
-```
-
-2. Access your secrets from the Web3Function context:
-
-```typescript
-// Get api from secrets
-const coingeckoApi = await context.secrets.get("COINGECKO_API");
-if (!coingeckoApi)
-  return { canExec: false, message: `COINGECKO_API not set in secrets` };
-```
-
-3. Test your Web3 Function using secrets:<br/>
-   `npx w3f test web3-functions/secrets/index.ts --logs`
-
-## Deploy your Web3Function on IPFS
-
-Use `npx w3f deploy FILEPATH` command to deploy your web3 function.
-
-Example:<br/>
-`npx w3f deploy web3-functions/oracle/index.ts`
-
-The deployer will output your Web3Function IPFS CID, that you can use to create your task:
-```
- ✓ Web3Function deployed to ipfs.
- ✓ CID: QmVfDbGGN6qfPs5ocu2ZuzLdBsXpu7zdfPwh14LwFUHLnc
-
-To create a task that runs your Web3 Function every minute, visit:
-> https://beta.app.gelato.network/new-task?cid=QmVfDbGGN6qfPs5ocu2ZuzLdBsXpu7zdfPwh14LwFUHLnc
-```
-
-
-## Create your Web3Function task
-Use the `automate-sdk` to easily create a new task (make sure you have your private_key in .env):
-
-```typescript
-const { taskId, tx } = await automate.createBatchExecTask({
-  name: "Web3Function - Eth Oracle",
-  web3FunctionHash: cid,
-  web3FunctionArgs: {
-    oracle: oracle.address,
-    currency: "ethereum",
-  },
-});
-await tx.wait();
-```
-
-If your task utilizes secrets, you can set them after the task has been created.
-
-```typescript
-// Set task specific secrets
-  const secrets = oracleW3f.getSecrets();
-  if (Object.keys(secrets).length > 0) {
-    await web3Function.secrets.set(secrets, taskId);
-    console.log(`Secrets set`);
-  }
-```
-
-Test it with our sample task creation script:<br/>
-`yarn create-task:oracle`
-
-```
-Deploying Web3Function on IPFS...
-Web3Function IPFS CID: QmVfDbGGN6qfPs5ocu2ZuzLdBsXpu7zdfPwh14LwFUHLnc
-
-Creating automate task...
-Task created, taskId: 0x8438933eb9c6e4632d984b4db1e7672082d367b900e536f86295b2e23dbcaff3
-> https://beta.app.gelato.network/task/0x8438933eb9c6e4632d984b4db1e7672082d367b900e536f86295b2e23dbcaff3?chainId=5
-```
-
-## More examples
-
-### Coingecko oracle
-
-Fetch price data from Coingecko API to update your on-chain Oracle
-
-Source: [`web3-functions/oracle/index.ts`](./web3-functions/oracle/index.ts)
-
-Run:<br/>
-`npx w3f test web3-functions/oracle/index.ts --logs`
-
-Create task: <br/>
-`yarn create-task:oracle`
-
-
-### Event listener
-
-Listen to smart contract events and use storage context to maintain your execution state.
-
-Source: [`web3-functions/event-listener/index.ts`](./web3-functions/event-listener/index.ts)
-
-Run:<br/>
-`npx w3f test web3-functions/event-listener/index.ts --logs`
-
-Create task: <br/>
-`yarn create-task:event`
-
-### Secrets 
-
-Fetch data from a private API to update your on-chain Oracle
-
-Source: [`web3-functions/secrets/index.ts`](./web3-functions/secrets/index.ts)
-
-Run:<br/>
-`npx w3f test web3-functions/secrets/index.ts --logs`
-
-Create task: <br/>
-`yarn create-task:secrets`
-
-### Advertising Board
-
-Fetch a random quote from an API and post it on chain. 
-
-Source: [`web3-functions/advertising-board/index.ts`](./web3-functions/advertising-board/index.ts)
-
-Run:<br/>
-`npx w3f test web3-functions/advertising-board/index.ts`
-
-Create task: <br/>
-`yarn create-task:ad-board`
