@@ -10,7 +10,7 @@ import {
   import { AURA_STRATEGY } from "./constants";
   
   Web3Function.onRun(async (context: Web3FunctionContext) => {
-    const { userArgs, gelatoArgs, multiChainProvider } = context;
+    const { multiChainProvider } = context;
   
     const provider = multiChainProvider.default();
   
