@@ -1,5 +1,9 @@
 # Pounder Web3 Functions
 
+Within the architecture of the [pounder](https://github.com/HumpysGold/pounder/tree/main), there is a component that requires activation using data residing in web2. To bridge this data into the smart contract, our team is utilizing [Gelato web3 functions](https://docs.gelato.network/developer-services/web3-functions). 
+
+This integration enables us to fetch proofs from Paladin endpoint and trigger the [harvestPaladinDelegate](https://github.com/HumpysGold/pounder/blob/main/src/AuraStrategy.sol#L351) method at our preferred cadence through automated means.
+
 ## Project Setup
 1. Install project dependencies
 ```
@@ -25,7 +29,6 @@ PRIVATE_KEY="" # optional: only needed if you wish to create a task from the CLI
 - Options:
   - `--logs` Show internal Web3 Function logs
   - `--debug` Show Runtime debug messages
-  - `--chain-id=[number]` Specify the chainId to be used for your Web3 Function (default: `5` for Goerli)
 
 - Output:
 ```
@@ -64,3 +67,21 @@ Web3Function Runtime stats:
  ✓ Network: 1 req [ DL: 6.93kb / UL:  0.60kb]
  ✓ Rpc calls: 0
   ```
+
+
+## Harvest Paladin web3 function deployment
+
+Run:
+
+```
+npx w3f deploy web3-functions/harvest-paladin/index.ts
+```
+
+## Deployments
+
+- `Web3 Function Gelato ID`: []
+
+- `Ipfs CID`: [QmejFRbU6tnzRKHTbEinHbEsg7wrMDhnGrQxpBgLn7hKvE](https://cloudflare-ipfs.com/ipfs/bafybeicn7i3soqdgr7dwnrwytgq4zxy7a5jpkizrvhm5mv6bgjd32wm3q4/)
+
+- `Funding wallet`: [0xDb1b024855AC829681818aa7ED021f65509321b5](https://etherscan.io/address/0xDb1b024855AC829681818aa7ED021f65509321b5)
+
