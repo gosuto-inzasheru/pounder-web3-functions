@@ -79,5 +79,7 @@ npx w3f deploy web3-functions/harvest-paladin/index.ts
 
 - `Ipfs CID Testnet`: [Qmaf73G62WXymhrqnEQTa6ePTR9gBybVxh9aLwCToMZPmH](https://api.gelato.digital/automate/users/users/web3-function/Qmaf73G62WXymhrqnEQTa6ePTR9gBybVxh9aLwCToMZPmH/source)
 
+- `Automated transaction hash`: [0xc0b535156414cf2ebfad018e7704400f5627af8849490ba6ab5bd1b23cd4c08b](https://goerli.etherscan.io/tx/0xc0b535156414cf2ebfad018e7704400f5627af8849490ba6ab5bd1b23cd4c08b)
+
 - `Funding wallet`: [0xDb1b024855AC829681818aa7ED021f65509321b5](https://etherscan.io/address/0xDb1b024855AC829681818aa7ED021f65509321b5)
 
