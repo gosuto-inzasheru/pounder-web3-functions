@@ -8,7 +8,7 @@ export default async function getPaladinProofs() {
       .get(url, { timeout: 5_000, retry: 0 })
       .json();
 
-    const rewardsResponse = response["rewards"];
+    const rewardsResponse = response["delegations"];
 
     return rewardsResponse;
   } catch (error) {
